@@ -12,6 +12,7 @@ COLOURS = ["r", "g", "b", "k"]
 
 
 bot = commands.Bot(command_prefix="hd!")
+bot.load_extension("jishaku")
 with open("data.json") as f:
     data = json.load(f)
 
@@ -21,17 +22,21 @@ async def on_ready():
     print(f"Ready on {bot.user} (ID {bot.user.id})")
 
 @bot.command()
+async def owner(ctx): await ctx.send("the owner is lyricly#5695")
+
+@bot.command()
 async def histodev(ctx, member: discord.Member = None):
     member = member or ctx.author
     for i, thing in enumerate(zip(*data[str(member.id)])):
-        tot = sum(data[str(member.id)][i])
-        plt.plot([x / tot if tot else x for x in thing], f".-{COLOURS[i]}")
+        plt.plot([x / tot if (tot := sum(data[str(member.id)][j])) else x for j, x in enumerate(thing)], f".-{COLOURS[i]}")
+        plt.xlabel("green = desktop, blue = web, red = mobile")
+        plt.ylabel("percentage")
         plt.xticks(range(24))
     plt.savefig("img.png")
     await ctx.send(file=discord.File("img.png"))
     plt.close()
 
-@tasks.loop(minutes=20)
+@tasks.loop(minutes=10)
 async def get_data():
     await bot.wait_until_ready()
 
