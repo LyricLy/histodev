@@ -42,10 +42,7 @@ async def histodev(ctx, member: discord.Member = None):
     await ctx.send(file=discord.File("img.png"))
     plt.close()
 
-@commands.max_concurrency(1)
-@bot.command()
-async def histohist(ctx, *members: typing.Union[discord.Member, int]):
-    members = members or (ctx.author,)
+async def catch_up(ctx):
     last = datetime.utcfromtimestamp(hdata["last"])
     if (datetime.utcnow() - last).total_seconds() > 1200:
         m = await ctx.send("Catching up on history...")
@@ -71,6 +68,20 @@ async def histohist(ctx, *members: typing.Union[discord.Member, int]):
             json.dump(hdata, f)
         await m.delete()
 
+@commands.check
+def is_in_esolangs(ctx):
+    return ctx.guild.id == 346530916832903169
+
+@commands.max_concurrency(1)
+@is_in_esolangs
+@bot.command()
+async def histohist(ctx, *members: typing.Union[discord.Member, int]):
+    #await catch_up(ctx)
+    if -1 in members:
+        members = ctx.guild.members
+    elif -2 in members:
+        members = sorted(ctx.guild.members, key=lambda u: sum(hdata["users"][str(u.id)].values()) if str(u.id) in hdata["users"] else 0, reverse=True)[:10]
+    members = ctx.guild.members if -1 in members else members or (ctx.author,)
     NAMES = {
         "b": "blue",
         "g": "green",
@@ -78,11 +89,10 @@ async def histohist(ctx, *members: typing.Union[discord.Member, int]):
         "c": "cyan",
         "m": "magenta",
         "y": "yellow",
-        "k": "black",
-        "w": "white"
+        "k": "black"
     }
     colours = {}
-    for member, c in zip(members, "bgrcmykw"):
+    for member, c in zip(members, itertools.cycle("bgrcmyk")):
         colours[member] = NAMES[c]
         id = member if isinstance(member, int) else member.id
         try:
@@ -90,7 +100,7 @@ async def histohist(ctx, *members: typing.Union[discord.Member, int]):
         except KeyError:
             await ctx.send(f"Didn't find `{member}`.")
     if len(members) > 1:
-        plt.xlabel(", ".join(f"{c} = {m}" for m, c in colours.items()))
+        plt.xlabel(", ".join(f"{c} = {m}" for m, c in colours.items()), fontsize=8, wrap=True)
     plt.ylabel("messages")
     plt.savefig("img.png")
     await ctx.send(file=discord.File("img.png"))
