@@ -101,7 +101,7 @@ async def get_data():
     await bot.wait_until_ready()
 
     hour = datetime.utcnow().hour
-    for member in bot.guilds[0].members:
+    for member in set(bot.get_all_members()):
         try:
             values = data[str(member.id)][hour]
         except KeyError:
