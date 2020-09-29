@@ -83,7 +83,7 @@ def is_in_esolangs(ctx):
 @is_in_esolangs
 @bot.command()
 async def histohist(ctx, *members: typing.Union[discord.Member, int]):
-    #await catch_up(ctx)
+    await catch_up(ctx)
     if -1 in members:
         members = ctx.guild.members
     elif -2 in members:
