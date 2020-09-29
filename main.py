@@ -14,7 +14,14 @@ from discord.ext import commands, tasks
 COLOURS = ["r", "g", "b", "k"]
 
 
-bot = commands.Bot(command_prefix="hd!")
+intents = discord.Intents(
+    guilds=True,
+    members=True,
+    messages=True,
+    presences=True
+)
+
+bot = commands.Bot(command_prefix="hd!", intents=intents, member_cache_flags=discord.MemberCacheFlags.from_intents(intents))
 bot.load_extension("jishaku")
 with open("data.json") as f:
     data = json.load(f)
@@ -28,7 +35,7 @@ async def on_ready():
 
 @bot.command()
 async def owner(ctx):
-    await ctx.send("オーナーはLyricLy#5695だよ")
+    await ctx.send("オーナーはLyricLy#5695です。")
 
 @bot.command()
 async def histodev(ctx, member: discord.Member = None):
