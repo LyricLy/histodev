@@ -21,7 +21,7 @@ intents = discord.Intents(
     presences=True
 )
 
-bot = commands.Bot(command_prefix="hd!", intents=intents, member_cache_flags=discord.MemberCacheFlags.from_intents(intents))
+bot = commands.Bot(command_prefix="hd!", intents=intents)
 bot.load_extension("jishaku")
 with open("data.json") as f:
     data = json.load(f)
