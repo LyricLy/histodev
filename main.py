@@ -42,7 +42,7 @@ async def histodev(ctx, member: discord.Member = None):
     member = member or ctx.author
     for i, thing in enumerate(zip(*data[str(member.id)])):
         plt.plot([x / tot if (tot := sum(data[str(member.id)][j])) else x for j, x in enumerate(thing)], f".-{COLOURS[i]}")
-        plt.xlabel("green = desktop, blue = web, red = mobile")
+        plt.xlabel("green = desktop, blue = web, red = mobile, black = offline")
         plt.ylabel("percentage")
         plt.xticks(range(24))
     plt.savefig("img.png")
