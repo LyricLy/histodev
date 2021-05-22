@@ -22,6 +22,7 @@ intents = discord.Intents(
 )
 
 bot = commands.Bot(command_prefix="hd!", intents=intents)
+bot.pyplot_lock = asyncio.Lock()
 bot.load_extension("jishaku")
 with open("data.json") as f:
     data = json.load(f)
@@ -35,19 +36,20 @@ async def on_ready():
 
 @bot.command()
 async def owner(ctx):
-    await ctx.send("オーナーはLyricLy#5695です。")
+    await ctx.send("オーナーはLyricLy#9345です。")
 
 @bot.command()
 async def histodev(ctx, member: discord.Member = None):
-    member = member or ctx.author
-    for i, thing in enumerate(zip(*data[str(member.id)])):
-        plt.plot([x / tot if (tot := sum(data[str(member.id)][j])) else x for j, x in enumerate(thing)], f".-{COLOURS[i]}")
-        plt.xlabel("green = desktop, blue = web, red = mobile, black = offline")
-        plt.ylabel("percentage")
-        plt.xticks(range(24))
-    plt.savefig("img.png")
-    await ctx.send(file=discord.File("img.png"))
-    plt.close()
+    async with bot.pyplot_lock:
+        member = member or ctx.author
+        for i, thing in enumerate(zip(*data[str(member.id)])):
+            plt.plot([x / tot if (tot := sum(data[str(member.id)][j])) else x for j, x in enumerate(thing)], f".-{COLOURS[i]}")
+            plt.xlabel("green = desktop, blue = web, red = mobile, black = offline")
+            plt.ylabel("proportion")
+            plt.xticks(range(24))
+        plt.savefig("img.png")
+        await ctx.send(file=discord.File("img.png"))
+        plt.close()
 
 async def catch_up(ctx):
     last = datetime.utcfromtimestamp(hdata["last"])
@@ -98,20 +100,21 @@ async def histohist(ctx, *members: typing.Union[discord.Member, int]):
         "y": "yellow",
         "k": "black"
     }
-    colours = {}
-    for member, c in zip(members, itertools.cycle("bgrcmyk")):
-        colours[member] = NAMES[c]
-        id = member if isinstance(member, int) else member.id
-        try:
-            plt.plot_date(*zip(*((float(x), y) for x, y in sorted(hdata["users"][str(id)].items()))), c)
-        except KeyError:
-            await ctx.send(f"Didn't find `{member}`.")
-    if len(members) > 1:
-        plt.xlabel(", ".join(f"{c} = {m}" for m, c in colours.items()), fontsize=8, wrap=True)
-    plt.ylabel("messages")
-    plt.savefig("img.png")
-    await ctx.send(file=discord.File("img.png"))
-    plt.close()
+    async with bot.pyplot_lock:
+        colours = {}
+        for member, c in zip(members, itertools.cycle("bgrcmyk")):
+            colours[member] = NAMES[c]
+            id = member if isinstance(member, int) else member.id
+            try:
+                plt.plot_date(*zip(*((float(x), y) for x, y in sorted(hdata["users"][str(id)].items()))), c)
+            except KeyError:
+                await ctx.send(f"Didn't find `{member}`.")
+        if len(members) > 1:
+            plt.xlabel(", ".join(f"{c} = {m}" for m, c in colours.items()), fontsize=8, wrap=True)
+        plt.ylabel("messages")
+        plt.savefig("img.png")
+        await ctx.send(file=discord.File("img.png"))
+        plt.close()
 
 @tasks.loop(minutes=10)
 async def get_data():
@@ -124,11 +127,11 @@ async def get_data():
         except KeyError:
             data[str(member.id)] = [[0, 0, 0, 0] for _ in range(24)]
             values = [0, 0, 0, 0]
-        if not member.mobile_status == discord.Status.offline:
+        if member.mobile_status != discord.Status.offline:
             values[0] += 1
-        elif not member.desktop_status == discord.Status.offline:
+        elif member.desktop_status != discord.Status.offline:
             values[1] += 1
-        elif not member.web_status == discord.Status.offline:
+        elif member.web_status != discord.Status.offline:
             values[2] += 1
         else:
             values[3] += 1
