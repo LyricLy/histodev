@@ -1,4 +1,3 @@
-data.json
-hdata.json
+*.json
 img.png
 token.txt

@@ -28,6 +28,8 @@ with open("data.json") as f:
     data = json.load(f)
 with open("hdata.json") as f:
     hdata = json.load(f)
+with open("data30.json") as f:
+    data30 = json.load(f)
 
 
 @bot.event
@@ -38,15 +40,24 @@ async def on_ready():
 async def owner(ctx):
     await ctx.send("オーナーはLyricLy#9345です。")
 
-@bot.command()
+@bot.command(aliases=["histodev30"])
 async def histodev(ctx, member: discord.Member = None):
     async with bot.pyplot_lock:
         member = member or ctx.author
-        for i, thing in enumerate(zip(*data[str(member.id)])):
-            plt.plot([x / tot if (tot := sum(data[str(member.id)][j])) else x for j, x in enumerate(thing)], f".-{COLOURS[i]}")
-            plt.xlabel("green = desktop, blue = web, red = mobile, black = offline")
-            plt.ylabel("proportion")
-            plt.xticks(range(24))
+        if ctx.invoked_with == "histodev30":
+            d30 = data30[str(member.id)]
+            d = [[0]*len(d30[0][0]) for _ in range(len(d30[0]))]
+            for day in d30:
+                for i, hour in enumerate(day):
+                    for j, status in enumerate(hour):
+                        d[i][j] += status
+        else:
+            d = data[str(member.id)]
+        for i, thing in enumerate(zip(*d)):
+            plt.plot([x / tot if (tot := sum(d[j])) else x for j, x in enumerate(thing)], f".-{COLOURS[i]}")
+        plt.xlabel("green = desktop, blue = web, red = mobile, black = offline")
+        plt.ylabel("proportion")
+        plt.xticks(range(24))
         plt.savefig("img.png")
         await ctx.send(file=discord.File("img.png"))
         plt.close()
@@ -116,8 +127,17 @@ async def histohist(ctx, *members: typing.Union[discord.Member, int]):
         await ctx.send(file=discord.File("img.png"))
         plt.close()
 
+count = 0
+
 @tasks.loop(minutes=10)
 async def get_data():
+    global count
+    count += 1
+    new_day = False
+    if count == 144:
+        count = 0
+        new_day = True
+
     await bot.wait_until_ready()
 
     hour = datetime.utcnow().hour
@@ -127,17 +147,31 @@ async def get_data():
         except KeyError:
             data[str(member.id)] = [[0, 0, 0, 0] for _ in range(24)]
             values = [0, 0, 0, 0]
+        try:
+            values30 = data30[str(member.id)][hour]
+        except KeyError:
+            data30[str(member.id)] = [[[0, 0, 0, 0] for _ in range(24)] for _ in range(30)]
+            values30 = [[0, 0, 0, 0] for _ in range(24)]
+        if new_day:
+            values30.pop(0)
+            values30.append([0, 0, 0, 0])
         if member.mobile_status != discord.Status.offline:
             values[0] += 1
+            values30[-1][0] += 1
         elif member.desktop_status != discord.Status.offline:
             values[1] += 1
+            values30[-1][1] += 1
         elif member.web_status != discord.Status.offline:
             values[2] += 1
+            values30[-1][2] += 1
         else:
             values[3] += 1
+            values30[-1][3] += 1
         data[str(member.id)][hour] = values
     with open("data.json", "w") as f:
         json.dump(data, f)
+    with open("data30.json", "w") as f:
+        json.dump(data30, f)
 
 
 get_data.start()
