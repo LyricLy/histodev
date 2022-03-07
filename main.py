@@ -18,7 +18,8 @@ intents = discord.Intents(
     guilds=True,
     members=True,
     messages=True,
-    presences=True
+    guild_messages=True,
+    presences=True,
 )
 
 bot = commands.Bot(command_prefix="hd!", intents=intents)
