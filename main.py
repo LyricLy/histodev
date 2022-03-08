@@ -18,7 +18,7 @@ intents = discord.Intents(
     guilds=True,
     members=True,
     messages=True,
-    guild_messages=True,
+    message_content=True,
     presences=True,
 )
 
