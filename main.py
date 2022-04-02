@@ -105,8 +105,8 @@ async def histohist(ctx, *members: typing.Union[discord.Member, int]):
         plt.figure(figsize=(10, 5))
         colours = {}
         if -3 in members:
-            months = sorted({float(x) for member in ctx.guild.members for x in hdata["users"].get(str(member.id), {}).keys()})
-            data = [(x, sum(hdata["users"].get(str(member.id), {}).get(x, 0) for member in ctx.guild.members)) for x in months]
+            months = sorted({float(x) for member in hdata["users"].values() for x in member.keys()})
+            data = [(x, sum(member.get(x, 0) for member in hdata["users"].values())) for x in months]
             plt.plot_date(*zip(*data))
         else:
             for member, c in zip(members, itertools.cycle("bgrcmyk")):
