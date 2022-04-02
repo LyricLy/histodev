@@ -104,15 +104,20 @@ async def histohist(ctx, *members: typing.Union[discord.Member, int]):
     async with bot.pyplot_lock:
         plt.figure(figsize=(10, 5))
         colours = {}
-        for member, c in zip(members, itertools.cycle("bgrcmyk")):
-            colours[member] = NAMES[c]
-            id = member if isinstance(member, int) else member.id
-            try:
-                plt.plot_date(*zip(*((float(x), y) for x, y in sorted(hdata["users"][str(id)].items()))), c)
-            except KeyError:
-                await ctx.send(f"Didn't find `{member}`.")
-        if len(members) > 1:
-            plt.xlabel(", ".join(f"{c} = {m}" for m, c in colours.items()), fontsize=8, wrap=True)
+        if -3 in members:
+            months = sorted({float(x) for member in ctx.guild.members for x in hdata["users"].get(str(member.id), {}).keys()})
+            data = [(x, sum(hdata["users"].get(str(member.id), {}).get(x, 0)) for member in ctx.guild.members) for x in months]
+            plt.plot_date(*zip(*data))
+        else:
+            for member, c in zip(members, itertools.cycle("bgrcmyk")):
+                colours[member] = NAMES[c]
+                id = member if isinstance(member, int) else member.id
+                try:
+                    plt.plot_date(*zip(*((float(x), y) for x, y in sorted(hdata["users"][str(id)].items()))), c)
+                except KeyError:
+                    await ctx.send(f"Didn't find `{member}`.")
+            if len(members) > 1:
+                plt.xlabel(", ".join(f"{c} = {m}" for m, c in colours.items()), fontsize=8, wrap=True)
         plt.ylabel("messages")
         plt.savefig("img.png")
         await ctx.send(file=discord.File("img.png"))
