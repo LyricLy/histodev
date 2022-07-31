@@ -87,11 +87,12 @@ def is_in_esolangs(ctx):
 @bot.command()
 async def histohist(ctx, *members: typing.Union[discord.Member, int]):
     await catch_up(ctx)
+    members: set[discord.Member | int] = set(members) or {ctx.author}
     if -1 in members:
-        members = ctx.guild.members
-    elif -2 in members:
-        members = sorted(ctx.guild.members, key=lambda u: sum(hdata["users"][str(u.id)].values()) if str(u.id) in hdata["users"] else 0, reverse=True)[:10]
-    members = ctx.guild.members if -1 in members else members or (ctx.author,)
+        members = set(ctx.guild.members)
+    if -2 in members:
+        members.update(sorted(ctx.guild.members, key=lambda u: sum(hdata["users"][str(u.id)].values()) if str(u.id) in hdata["users"] else 0, reverse=True)[:10])
+        members.remove(-2)
     NAMES = {
         "b": "blue",
         "g": "green",
@@ -107,17 +108,17 @@ async def histohist(ctx, *members: typing.Union[discord.Member, int]):
         if -3 in members:
             months = sorted({x for member in hdata["users"].values() for x in member.keys()})
             data = [(float(x), sum(member.get(x, 0) for member in hdata["users"].values())) for x in months]
-            plt.plot_date(*zip(*data), "b")
-        else:
-            for member, c in zip(members, itertools.cycle("bgrcmyk")):
-                colours[member] = NAMES[c]
-                id = member if isinstance(member, int) else member.id
-                try:
-                    plt.plot_date(*zip(*((float(x), y) for x, y in sorted(hdata["users"][str(id)].items()))), c)
-                except KeyError:
-                    pass
-            if len(members) > 1:
-                plt.xlabel(", ".join(f"{c} = {m}" for m, c in colours.items()), fontsize=8, wrap=True)
+            plt.plot_date(*zip(*data), "k")
+            members.remove(-3)
+        for member, c in zip(members, itertools.cycle("bgrcmy")):
+            colours[member] = NAMES[c]
+            id = member if isinstance(member, int) else member.id
+            try:
+                plt.plot_date(*zip(*((float(x), y) for x, y in sorted(hdata["users"][str(id)].items()))), c)
+            except KeyError:
+                pass
+        if len(members) > 1:
+            plt.xlabel(", ".join(f"{c} = {m}" for m, c in colours.items()), fontsize=8, wrap=True)
         plt.ylabel("messages")
         plt.savefig("img.png")
         await ctx.send(file=discord.File("img.png"))
