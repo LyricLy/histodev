@@ -24,7 +24,10 @@ intents = discord.Intents(
 
 bot = commands.Bot(command_prefix="hd!", intents=intents)
 bot.pyplot_lock = asyncio.Lock()
-bot.load_extension("jishaku")
+async def setup():
+    await bot.load_extension("jishaku")
+    get_data.start()
+bot.setup_hook = setup
 with open("data.json") as f:
     data = json.load(f)
 with open("hdata.json") as f:
@@ -147,7 +150,5 @@ async def get_data():
     with open("data.json", "w") as f:
         json.dump(data, f)
 
-
-get_data.start()
 with open("token.txt") as f:
     bot.run(f.read().strip())
