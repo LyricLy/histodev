@@ -40,7 +40,7 @@ async def on_ready():
 
 @bot.command()
 async def owner(ctx):
-    await ctx.send("オーナーはLyricLy#9345です。")
+    await ctx.send("オーナーはlyriclyです。")
 
 @bot.command()
 async def histodev(ctx, member: discord.Member = None):
