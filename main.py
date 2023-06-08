@@ -115,7 +115,7 @@ async def histohist(ctx, *members: typing.Union[discord.Member, int]):
             months = sorted({x for member in users for x in member.keys()})
             data = [(float(x), sum(member.get(x, 0) for member in users) / (sum(x in member for member in users) if cond == -4 else 1)) for x in months]
             plt.plot_date(*zip(*data), "k")
-            members.remove(-3)
+            members.remove(cond)
         for member, c in zip(members, itertools.cycle("bgrcmy")):
             colours[member] = NAMES[c]
             id = member if isinstance(member, int) else member.id
